@@ -2,7 +2,7 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 
-from VisTrans.util import ntuple
+from vistrans.util import ntuple
 
 
 # TO-DO: Implement hybrid embedding (features from some backbone as input)

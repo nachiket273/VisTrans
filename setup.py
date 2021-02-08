@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='VisTrans',
+    name='vistrans',
     version='0.0.1',
     description='Unofficial implementations of transfomers models for vision.',
     url='https://github.com/nachiket273/VisTrans',
