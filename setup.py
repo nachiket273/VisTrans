@@ -12,7 +12,7 @@ exec(open('VisTrans/version.py').read())
 setup(
     name='VisTrans',
     version=__version__,
-    description='(Unofficial) PyTorch Image Models',
+    description='Unofficial implementations of transfomers models for vision.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='git@github.com:nachiket273/VisTrans-sdk-package.git',
@@ -20,12 +20,12 @@ setup(
     author_email='nachiket.tanksale@gmail.com',
     classifiers=[
         'Intended Audience :: Education',
-        'License :: OSI Approved :: MIT License',
+        'License :: MIT License',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-        'Topic :: Scientific/Engineering',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence'
+        'Topic :: Engineering',
+        'Topic :: Engineering :: Artificial Intelligence'
     ],
     keywords='pytorch transformer vision',
     packages=find_packages(exclude=[]),
