@@ -1,21 +1,11 @@
 from setuptools import setup, find_packages
-from codecs import open
-from os import path
 
-curr = path.abspath(path.dirname(__file__))
 
-# Get the long description from the README file
-with open(path.join(curr, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
-exec(open('VisTrans/version.py').read())
 setup(
     name='VisTrans',
-    version=__version__,
+    version='0.0.1',
     description='Unofficial implementations of transfomers models for vision.',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='git@github.com:nachiket273/VisTrans-sdk-package.git',
+    url='https://github.com/nachiket273/VisTrans',
     author='Nachiket Tanksale',
     author_email='nachiket.tanksale@gmail.com',
     classifiers=[
@@ -32,4 +22,5 @@ setup(
     include_package_data=True,
     install_requires=['torch >= 1.4', 'torchvision'],
     python_requires='>=3.6',
+    zip_safe=False
 )
