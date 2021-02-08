@@ -2,7 +2,7 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 
-from util import ntuple
+from VisTrans.util import ntuple
 
 
 # TO-DO: Implement hybrid embedding (features from some backbone as input)
@@ -182,7 +182,7 @@ class VisionTransformer(nn.Module):
     def _init_weights(self):
         nn.init.trunc_normal_(self.pos_embed, std=0.2)
         nn.init.trunc_normal_(self.cls_token, std=0.2)
-        nn.init.zeros_(self.head.weight, std=0.2)
+        nn.init.zeros_(self.head.weight)
         nn.init.constant_(self.head.bias, 0.)
 
     def forward(self, x):
