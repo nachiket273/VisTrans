@@ -1,3 +1,12 @@
+""" Vision Transformer
+
+A PyTorch implementation of Vision Transformers:
+'An Image Is Worth 16 x 16 Words: Transformers for Image Recognition at Scale'
+- https://arxiv.org/abs/2010.11929
+
+The official jax code is available at
+https://github.com/google-research/vision_transformer
+"""
 from copy import deepcopy
 import torch
 import torch.nn as nn
@@ -58,42 +67,6 @@ class MLP(nn.Module):
         return self.dropout(x)
 
 
-class Attention(nn.Module):
-    def __init__(self, dim, num_heads=8, attn_dropout=0., bias=False,
-                 scale_factor=None):
-        super().__init__()
-        self.num_heads = num_heads
-        head_dim = dim // num_heads
-        self.scale = scale_factor or head_dim ** -0.5
-
-        self.qkv = nn.Linear(dim, dim*3, bias=bias)
-        self.attn_dropout = nn.Dropout(attn_dropout)
-        self.proj = nn.Linear(dim, dim)
-        self.proj_dropout = nn.Dropout(attn_dropout)
-        self._init_weights()
-
-    def _init_weights(self):
-        nn.init.xavier_normal_(self.qkv.weight)
-        nn.init.normal_(self.qkv.bias, std=1e-6)
-        nn.init.xavier_normal_(self.proj.weight)
-        nn.init.normal_(self.proj.bias, std=1e-6)
-
-    def forward(self, x):
-        b, n, c = x.shape
-        qkv = self.qkv(x).reshape(b, n, 3, self.num_heads, c//self.num_heads)
-        qkv = qkv.permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[2]
-
-        dot = (torch.einsum('bhid,bhjd->bhij', q, k)) * self.scale
-        attn = dot.softmax(dim=-1)
-        attn = self.attn_dropout(attn)
-
-        x = torch.einsum('bhij,bhjd->bhid', attn, v).reshape(b, n, c)
-        x = self.proj(x)
-        x = self.proj_dropout(x)
-        return x
-
-
 class EncoderLayer(nn.Module):
     def __init__(self, embed_dim, n_head=12, mlp_ratio=4,
                  attention_drop_rate=0., dropout_ratio=0.,
@@ -101,9 +74,10 @@ class EncoderLayer(nn.Module):
                  scale=None):
         super().__init__()
         self.embed_dim = embed_dim
-        self.attn = Attention(embed_dim, num_heads=n_head,
-                              attn_dropout=attention_drop_rate, bias=bias,
-                              scale_factor=scale)
+        self.attn = nn.MultiheadAttention(embed_dim, num_heads=n_head,
+                                          dropout=attention_drop_rate,
+                                          bias=bias,
+                                          add_bias_kv=bias)
         self.dropout = nn.Dropout(p=dropout_ratio)
         self.norm1 = norm_layer(embed_dim)
         self.norm2 = norm_layer(embed_dim)
@@ -119,7 +93,7 @@ class EncoderLayer(nn.Module):
 
     def forward(self, x):
         y = self.norm1(x)
-        y = self.attn(y)
+        y, _ = self.attn(y, y, y)
         x = x + self.dropout(y)
         y = self.norm2(x)
         return x + self.mlp(y)
