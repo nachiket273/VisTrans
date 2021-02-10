@@ -8,6 +8,7 @@ The official jax code is available at
 https://github.com/google-research/vision_transformer
 """
 from copy import deepcopy
+from functools import partial
 import torch
 import torch.nn as nn
 
@@ -74,6 +75,7 @@ class EncoderLayer(nn.Module):
                  scale=None):
         super().__init__()
         self.embed_dim = embed_dim
+        self.num_heads = n_head
         self.attn = nn.MultiheadAttention(embed_dim, num_heads=n_head,
                                           dropout=attention_drop_rate,
                                           bias=bias,
@@ -123,7 +125,8 @@ class VisionTransformer(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_ch=3, num_classes=1000,
                  embed_dim=768, depth=12, num_heads=12, mlp_ratio=4.,
                  drop_rate=0., attention_drop_rate=0., hybrid=False,
-                 norm_layer=nn.LayerNorm, bias=True, scale=None):
+                 norm_layer=partial(nn.LayerNorm, eps=1e-6), bias=True,
+                 scale=None):
         super().__init__()
         self.num_classes = num_classes
         self.embed_dim = embed_dim
