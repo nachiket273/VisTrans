@@ -78,8 +78,7 @@ class EncoderLayer(nn.Module):
         self.num_heads = n_head
         self.attn = nn.MultiheadAttention(embed_dim, num_heads=n_head,
                                           dropout=attention_drop_rate,
-                                          bias=bias,
-                                          add_bias_kv=bias)
+                                          bias=bias)
         self.dropout = nn.Dropout(p=dropout_ratio)
         self.norm1 = norm_layer(embed_dim)
         self.norm2 = norm_layer(embed_dim)
@@ -147,7 +146,8 @@ class VisionTransformer(nn.Module):
         enc_layer = EncoderLayer(embed_dim, n_head=num_heads,
                                  mlp_ratio=mlp_ratio,
                                  attention_drop_rate=attention_drop_rate,
-                                 dropout_ratio=drop_rate, bias=bias,
+                                 dropout_ratio=drop_rate,
+                                 norm_layer=norm_layer, bias=bias,
                                  scale=scale)
 
         self.enc = Encoder(enc_layer, depth)
