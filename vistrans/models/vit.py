@@ -71,8 +71,8 @@ class MLP(nn.Module):
 class EncoderLayer(nn.Module):
     def __init__(self, embed_dim, n_head=12, mlp_ratio=4,
                  attention_drop_rate=0., dropout_ratio=0.,
-                 act_layer=nn.GELU, norm_layer=nn.LayerNorm, bias=False,
-                 scale=None):
+                 act_layer=nn.GELU,
+                 norm_layer=partial(nn.LayerNorm, eps=1e-6), bias=False):
         super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = n_head
@@ -101,7 +101,8 @@ class EncoderLayer(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, encoder_layer, num_layers, norm_layer=nn.LayerNorm):
+    def __init__(self, encoder_layer, num_layers,
+                 norm_layer=partial(nn.LayerNorm, eps=1e-6)):
         super().__init__()
         self.layers = nn.ModuleList([deepcopy(encoder_layer)
                                      for _ in range(num_layers)])
@@ -124,12 +125,10 @@ class VisionTransformer(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_ch=3, num_classes=1000,
                  embed_dim=768, depth=12, num_heads=12, mlp_ratio=4.,
                  drop_rate=0., attention_drop_rate=0., hybrid=False,
-                 norm_layer=partial(nn.LayerNorm, eps=1e-6), bias=True,
-                 scale=None):
+                 norm_layer=partial(nn.LayerNorm, eps=1e-6), bias=True):
         super().__init__()
         self.num_classes = num_classes
         self.embed_dim = embed_dim
-        self.norm_layer = norm_layer(embed_dim)
 
         if hybrid:
             self.patch_embed = HybridEmbed()  # not-implemented currently
@@ -147,8 +146,7 @@ class VisionTransformer(nn.Module):
                                  mlp_ratio=mlp_ratio,
                                  attention_drop_rate=attention_drop_rate,
                                  dropout_ratio=drop_rate,
-                                 norm_layer=norm_layer, bias=bias,
-                                 scale=scale)
+                                 norm_layer=norm_layer, bias=bias)
 
         self.enc = Encoder(enc_layer, depth)
 
@@ -172,3 +170,33 @@ class VisionTransformer(nn.Module):
 
         x = self.enc(x)
         return self.head(x[:, 0])
+
+
+def assign_weights_from_pretrained(model, model1, depth=12):
+    model.patch_embed.patch_embed.weight = model1.patch_embed.proj.weight
+    model.patch_embed.patch_embed.bias = model1.patch_embed.proj.bias
+    model.enc.norm.weight = model1.norm.weight
+    model.enc.norm.bias = model1.norm.bias
+    model.head.weight = model1.head.weight
+    model.head.bias = model1.head.bias
+    model.cls_token = model1.cls_token
+
+    # If input image size is different, this will need different treatment.
+    model.pos_embed = model1.pos_embed
+
+    for i in range(depth):
+        model.enc.layers[i].norm1.weight = model1.blocks[i].norm1.weight
+        model.enc.layers[i].norm1.bias = model1.blocks[i].norm1.bias
+        model.enc.layers[i].norm2.weight = model1.blocks[i].norm2.weight
+        model.enc.layers[i].norm2.bias = model1.blocks[i].norm2.bias
+        model.enc.layers[i].mlp.fc1.weight = model1.blocks[i].mlp.fc1.weight
+        model.enc.layers[i].mlp.fc1.bias = model1.blocks[i].mlp.fc1.bias
+        model.enc.layers[i].mlp.fc2.weight = model1.blocks[i].mlp.fc2.weight
+        model.enc.layers[i].mlp.fc2.bias = model1.blocks[i].mlp.fc2.bias
+        model.enc.layers[i].attn.in_proj_weight \
+            = model1.blocks[i].attn.qkv.weight
+        model.enc.layers[i].attn.in_proj_bias = model1.blocks[i].attn.qkv.bias
+        model.enc.layers[i].attn.out_proj.weight \
+            = model1.blocks[i].attn.proj.weight
+        model.enc.layers[i].attn.out_proj.bias \
+            = model1.blocks[i].attn.proj.bias
