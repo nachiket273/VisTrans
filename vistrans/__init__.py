@@ -1,2 +1,2 @@
-from .models import VisionTransformer, assign_weights_from_pretrained
+from .models import VisionTransformer
 from .version import __version__
