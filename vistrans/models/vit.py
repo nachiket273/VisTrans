@@ -252,6 +252,7 @@ class VisionTransformer():
             cfg['depth'] = 8
             cfg['mlp_ratio'] = 3
             cfg['num_heads'] = 8
+            cfg['bias'] = False
         elif name == 'vit_b16_384':
             cfg['img_size'] = 384
         elif name == 'vit_b32_384':
@@ -275,7 +276,7 @@ class VisionTransformer():
         return cfg
 
     @classmethod
-    def create_pretrained(cls, name, img_size=0, patch_size=0, in_ch=0,
+    def create_pretrained(cls, name, img_size=0, in_ch=0,
                           num_classes=0):
         if not VisionTransformer._is_valid_model_name(name):
             raise ValueError('Available pretrained models: ' +
@@ -287,7 +288,7 @@ class VisionTransformer():
         cfg['strict'] = True
 
         img_size = cfg['img_size'] if img_size == 0 else img_size
-        patch_size = cfg['patch_size'] if patch_size == 0 else patch_size
+        patch_size = cfg['patch_size']
         in_ch = cfg['in_ch'] if in_ch == 0 else in_ch
         num_classes = cfg['num_classes'] if num_classes == 0 else num_classes
 
