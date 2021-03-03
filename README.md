@@ -3,7 +3,7 @@ Implementations of transformers based models for different vision tasks
 
 ## Version 0.001 (03/03/2021)
 -----------------------------
-Pretrained Pytorch [Vision Transformer](https://arxiv.org/abs/2010.11929) Models including following
+Pretrained Pytorch <a href="https://arxiv.org/abs/2010.11929">Vision Transformer</a> Models including following
 <br>
 * vit_s16_224
 * vit_b16_224
@@ -13,7 +13,7 @@ Pretrained Pytorch [Vision Transformer](https://arxiv.org/abs/2010.11929) Models
 * vit_l16_384
 * vit_l32_384
 <br>
-Implementation based off [official jax repository](https://github.com/google-research/vision_transformer) and [timm's implementation](https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py)<br>
+Implementation based off <a href=https://github.com/google-research/vision_transformer>official jax repository</a> and <a href="https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py">timm's implementation</a><br>
 
 ## Install
 ---------------------
