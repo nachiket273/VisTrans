@@ -1,1 +1,1 @@
-from .vit import *
+from .vit import VisionTransformer

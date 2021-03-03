@@ -29,13 +29,13 @@ PRETRAINED_MODELS = [
 ]
 
 PRETRAINED_URLS = {
-    'vit_s16_224': '',
-    'vit_b16_224': '',
-    'vit_b16_384': '',
-    'vit_b32_384': '',
-    'vit_l16_224': '',
-    'vit_l16_384': '',
-    'vit_l32_384': ''
+    'vit_s16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_s16_224_7b942dec.pth',
+    'vit_b16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b16_224_c32a0db8.pth',
+    'vit_b16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b16_384_f646048e.pth',
+    'vit_b32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b32_384_ddfdd3bd.pth',
+    'vit_l16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l16_224_1332d647.pth',
+    'vit_l16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l16_384_57663803.pth',
+    'vit_l32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l32_384_7c034837.pth'
 }
 
 DEFAULT_CFG = {
@@ -53,39 +53,6 @@ DEFAULT_CFG = {
     'norm_layer': partial(nn.LayerNorm, eps=1e-6),
     'bias': True
 }
-
-
-def _get_default_cfg():
-    return DEFAULT_CFG
-
-
-def _get_cfg(name):
-    cfg = _get_default_cfg()
-    if name == 'vit_s16_224':
-        cfg['depth'] = 8
-        cfg['mlp_ratio'] = 3
-        cfg['num_heads'] = 8
-    elif name == 'vit_b16_384':
-        cfg['img_size'] = 384
-    elif name == 'vit_b32_384':
-        cfg['img_size'] = 384
-        cfg['patch_size'] = 32
-    elif name == 'vit_l16_224':
-        cfg['depth'] = 24
-        cfg['embed_dim'] = 1024
-        cfg['num_heads'] = 16
-    elif name == 'vit_l16_384':
-        cfg['img_size'] = 384
-        cfg['depth'] = 24
-        cfg['embed_dim'] = 1024
-        cfg['num_heads'] = 16
-    elif name == 'vit_l32_384':
-        cfg['img_size'] = 384
-        cfg['depth'] = 24
-        cfg['embed_dim'] = 1024
-        cfg['num_heads'] = 16
-        cfg['patch_size'] = 32
-    return cfg
 
 
 # TO-DO: Implement hybrid embedding (features from some backbone as input)
@@ -194,7 +161,7 @@ class Encoder(nn.Module):
         return out
 
 
-class VisionTransformer(nn.Module):
+class ViT(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_ch=3, num_classes=1000,
                  embed_dim=768, depth=12, num_heads=12, mlp_ratio=4.,
                  drop_rate=0., attention_drop_rate=0., hybrid=False,
@@ -244,6 +211,22 @@ class VisionTransformer(nn.Module):
         x = self.enc(x)
         return self.head(x[:, 0])
 
+
+class VisionTransformer():
+    def __init__(self):
+        super().__init__()
+
+    @classmethod
+    def create_model(cls, img_size=224, patch_size=16, in_ch=3,
+                     num_classes=1000, embed_dim=768, depth=12, num_heads=12,
+                     mlp_ratio=4., drop_rate=0., attention_drop_rate=0.,
+                     hybrid=False, norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                     bias=True):
+
+        return ViT(img_size, patch_size, in_ch, num_classes, embed_dim, depth,
+                   num_heads, mlp_ratio, drop_rate, attention_drop_rate,
+                   hybrid, norm_layer, bias)
+
     @classmethod
     def list_pretrained(cls):
         return PRETRAINED_MODELS
@@ -254,46 +237,90 @@ class VisionTransformer(nn.Module):
         name = name.lower()
         return name in PRETRAINED_MODELS
 
+    @classmethod
+    def _get_url(cls, name):
+        return PRETRAINED_URLS[name]
 
-def create_pretrained(name, img_size=224, patch_size=16, in_ch=3,
-                      num_classes=1000):
-    if not VisionTransformer._is_valid_model_name(name):
-        raise ValueError('Available pretrained models: ' +
-                         ', '.join(PRETRAINED_MODELS))
+    @classmethod
+    def _get_default_cfg(cls):
+        return DEFAULT_CFG
 
-    if img_size % patch_size != 0:
-        raise ValueError("Image size should be divisible by patch size.")
+    @classmethod
+    def _get_cfg(cls, name):
+        cfg = VisionTransformer._get_default_cfg()
+        if name == 'vit_s16_224':
+            cfg['depth'] = 8
+            cfg['mlp_ratio'] = 3
+            cfg['num_heads'] = 8
+        elif name == 'vit_b16_384':
+            cfg['img_size'] = 384
+        elif name == 'vit_b32_384':
+            cfg['img_size'] = 384
+            cfg['patch_size'] = 32
+        elif name == 'vit_l16_224':
+            cfg['depth'] = 24
+            cfg['embed_dim'] = 1024
+            cfg['num_heads'] = 16
+        elif name == 'vit_l16_384':
+            cfg['img_size'] = 384
+            cfg['depth'] = 24
+            cfg['embed_dim'] = 1024
+            cfg['num_heads'] = 16
+        elif name == 'vit_l32_384':
+            cfg['img_size'] = 384
+            cfg['depth'] = 24
+            cfg['embed_dim'] = 1024
+            cfg['num_heads'] = 16
+            cfg['patch_size'] = 32
+        return cfg
 
-    cfg = _get_cfg(name)
-    cfg['conv1'] = 'patch_embed.patch_embed'
-    cfg['classifier'] = 'head'
-    cfg['strict'] = True
+    @classmethod
+    def create_pretrained(cls, name, img_size=0, patch_size=0, in_ch=0,
+                          num_classes=0):
+        if not VisionTransformer._is_valid_model_name(name):
+            raise ValueError('Available pretrained models: ' +
+                             ', '.join(PRETRAINED_MODELS))
 
-    url = VisionTransformer._get_url(name)
-    model = VisionTransformer(img_size, patch_size, in_ch,
-                              num_classes, cfg['embed_dim'],
-                              cfg['depth'], cfg['num_heads'], cfg['mlp_ratio'],
-                              cfg['drop_rate'], cfg['attention_drop_rate'],
-                              cfg['hybrid'], cfg['norm_layer'], cfg['bias'])
+        cfg = VisionTransformer._get_cfg(name)
+        cfg['conv1'] = 'patch_embed.patch_embed'
+        cfg['classifier'] = 'head'
+        cfg['strict'] = True
 
-    state_dict = get_pretrained_weights(url, cfg, num_classes, in_ch,
-                                        check_hash=True)
+        img_size = cfg['img_size'] if img_size == 0 else img_size
+        patch_size = cfg['patch_size'] if patch_size == 0 else patch_size
+        in_ch = cfg['in_ch'] if in_ch == 0 else in_ch
+        num_classes = cfg['num_classes'] if num_classes == 0 else num_classes
 
-    # Update state_dict if img_size doesn't match.
-    # Based of https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
-    # and https://github.com/rwightman/pytorch-image-models/blob/95feb1da41c1fe95ce9634b83db343e08224a8c5/timm/models/vision_transformer.py#L464
-    if(cfg['img_size']/cfg['patch_size'] != img_size/patch_size):
-        posemb_tok = state_dict['pos_embed'][:, :1]
-        posemb_grid = state_dict['pos_embed'][0, 1:]
-        gs_old = int(math.sqrt(len(posemb_grid)))
-        gs_new = int(math.sqrt(model.pos_embed.shape[1]-1))
-        posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3,
-                                                                         1, 2)
-        posemb_grid = F.interpolate(posemb_grid, size=(gs_new, gs_new),
-                                    mode='bilinear', align_corners=True)
-        posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new *
-                                                              gs_new, -1)
-        state_dict['pos_embed'] = torch.cat([posemb_tok, posemb_grid], dim=1)
+        if img_size % patch_size != 0:
+            raise ValueError("Image size should be divisible by patch size.")
 
-    model.load_state_dict(state_dict, strict=cfg['strict'])
-    return model
+        url = VisionTransformer._get_url(name)
+        model = ViT(img_size, patch_size, in_ch, num_classes, cfg['embed_dim'],
+                    cfg['depth'], cfg['num_heads'], cfg['mlp_ratio'],
+                    cfg['drop_rate'], cfg['attention_drop_rate'],
+                    cfg['hybrid'], cfg['norm_layer'], cfg['bias'])
+
+        state_dict = get_pretrained_weights(url, cfg, num_classes, in_ch,
+                                            check_hash=True)
+
+        # Update state_dict if img_size doesn't match.
+        # Based of https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
+        # and https://github.com/rwightman/pytorch-image-models/blob/95feb1da41c1fe95ce9634b83db343e08224a8c5/timm/models/vision_transformer.py#L464
+        if(model.pos_embed.shape[1] != state_dict['pos_embed'].shape[1]):
+            posemb_tok = state_dict['pos_embed'][:, :1]
+            posemb_grid = state_dict['pos_embed'][0, 1:]
+            gs_old = int(math.sqrt(len(posemb_grid)))
+            gs_new = int(math.sqrt(model.pos_embed.shape[1]-1))
+            posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0,
+                                                                             3,
+                                                                             1,
+                                                                             2)
+            posemb_grid = F.interpolate(posemb_grid, size=(gs_new, gs_new),
+                                        mode='bilinear', align_corners=True)
+            posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new *
+                                                                  gs_new, -1)
+            state_dict['pos_embed'] = torch.cat([posemb_tok, posemb_grid],
+                                                dim=1)
+
+        model.load_state_dict(state_dict, strict=cfg['strict'])
+        return model
