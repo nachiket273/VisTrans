@@ -29,13 +29,13 @@ PRETRAINED_MODELS = [
 ]
 
 PRETRAINED_URLS = {
-    'vit_s16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_s16_224_367bc85f.pth',
-    'vit_b16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_b16_224_c32a0db8.pth',
-    'vit_b16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_b16_384_f646048e.pth',
-    'vit_b32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_b32_384_ddfdd3bd.pth',
-    'vit_l16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_l16_224_1332d647.pth',
-    'vit_l16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_l16_384_57663803.pth',
-    'vit_l32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_l32_384_7c034837.pth'
+    'vit_s16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_s16_224_45607315.pth',
+    'vit_b16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b16_224_f3d9f89c.pth',
+    'vit_b16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b16_384_a14a3f44.pth',
+    'vit_b32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b32_384_d6ce8791.pth',
+    'vit_l16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l16_224_e4578f73.pth',
+    'vit_l16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l16_384_75cf650d.pth',
+    'vit_l32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l32_384_2218c801.pth'
 }
 
 DEFAULT_CFG = {
@@ -108,6 +108,31 @@ class MLP(nn.Module):
         return self.dropout(x)
 
 
+class Attention(nn.Module):
+    def __init__(self, dim, num_heads=8, attn_dropout=0.):
+        super().__init__()
+        self.num_heads = num_heads
+        self.scale = (dim // num_heads)**-0.5
+
+        self.qkv = nn.Linear(dim, dim*3, bias=False)
+        self.attn_dropout = nn.Dropout(attn_dropout)
+        self.out = nn.Linear(dim, dim)
+
+    def forward(self, x):
+        b, n, c = x.shape
+        qkv = self.qkv(x).reshape(b, n, 3, self.num_heads, c//self.num_heads)
+        qkv = qkv.permute(2, 0, 3, 1, 4)
+        q, k, v = qkv[0], qkv[1], qkv[2]
+
+        dot = (q @ k.transpose(-2, -1)) * self.scale
+        attn = dot.softmax(dim=-1)
+        attn = self.attn_dropout(attn)
+
+        x = (attn @ v).transpose(1, 2).reshape(b, n, c)
+        x = self.out(x)
+        return x
+
+
 class EncoderLayer(nn.Module):
     def __init__(self, embed_dim, n_head=12, mlp_ratio=4,
                  attention_drop_rate=0., dropout_ratio=0.,
@@ -116,9 +141,8 @@ class EncoderLayer(nn.Module):
         super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = n_head
-        self.attn = nn.MultiheadAttention(embed_dim, num_heads=n_head,
-                                          dropout=attention_drop_rate,
-                                          bias=bias)
+        self.attn = Attention(embed_dim, num_heads=n_head,
+                              attn_dropout=attention_drop_rate)
         self.dropout = nn.Dropout(p=dropout_ratio)
         self.norm1 = norm_layer(embed_dim)
         self.norm2 = norm_layer(embed_dim)
@@ -134,7 +158,7 @@ class EncoderLayer(nn.Module):
 
     def forward(self, x):
         y = self.norm1(x)
-        y, _ = self.attn(y, y, y)
+        y = self.attn(y)
         x = x + self.dropout(y)
         y = self.norm2(x)
         return x + self.mlp(y)

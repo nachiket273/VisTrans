@@ -1,7 +1,7 @@
 # VisTrans
 Implementations of transformers based models for different vision tasks
 
-## Version 0.008 (03/04/2021)
+## Version 0.001 (03/04/2021)
 -----------------------------
 Pretrained Pytorch <a href="https://arxiv.org/abs/2010.11929">Vision Transformer</a> Models including following
 <br>
