@@ -18,7 +18,7 @@ Implementation based off <a href=https://github.com/google-research/vision_trans
 ## Install
 ---------------------
 ```Python
-pip install git+https://github.com/nachiket273/VisTrans
+pip install vistrans
 ```
 1) List Pretrained Models.
 ```Python
