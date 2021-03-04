@@ -29,13 +29,13 @@ PRETRAINED_MODELS = [
 ]
 
 PRETRAINED_URLS = {
-    'vit_s16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_s16_224_367bc85f.pth',
-    'vit_b16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b16_224_c32a0db8.pth',
-    'vit_b16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b16_384_f646048e.pth',
-    'vit_b32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_b32_384_ddfdd3bd.pth',
-    'vit_l16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l16_224_1332d647.pth',
-    'vit_l16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l16_384_57663803.pth',
-    'vit_l32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.001/vit_l32_384_7c034837.pth'
+    'vit_s16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_s16_224_367bc85f.pth',
+    'vit_b16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_b16_224_c32a0db8.pth',
+    'vit_b16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_b16_384_f646048e.pth',
+    'vit_b32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_b32_384_ddfdd3bd.pth',
+    'vit_l16_224': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_l16_224_1332d647.pth',
+    'vit_l16_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_l16_384_57663803.pth',
+    'vit_l32_384': 'https://github.com/nachiket273/VisTrans/releases/download/v0.007/vit_l32_384_7c034837.pth'
 }
 
 DEFAULT_CFG = {
