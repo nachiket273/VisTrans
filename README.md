@@ -3,6 +3,8 @@ Implementations of transformers based models for different vision tasks
 
 ## Version 0.001 (03/04/2021)
 -----------------------------
+[![PyPI version](https://badge.fury.io/py/vistrans.svg)](https://badge.fury.io/py/vistrans)
+
 Pretrained Pytorch <a href="https://arxiv.org/abs/2010.11929">Vision Transformer</a> Models including following
 <br>
 * vit_s16_224
