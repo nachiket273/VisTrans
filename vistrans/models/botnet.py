@@ -34,9 +34,59 @@ def get_actn(actn):
     return nn.SiLU(inplace=True)
 
 
+def rel_to_abs(x):
+    b, h, l, _ = x.shape
+    device = x.device
+    dtype = x.dtype
+    pad = torch.zeros((b, h, l, 1), device=device, dtype=dtype)
+    x = torch.cat((x, pad), dim=3)
+    x = x.view(x.shape[0], x.shape[1], -1)
+    pad1 = torch.zeros((b, h, l-1), dtype=dtype, device=device)
+    final = torch.cat((x, pad1), dim=2)
+    final = final.reshape(b, h, l+1, 2*l-1)
+    return final[:, :, :l, (l-1):]
+
+
+def relative_logits_1d(x, emb):
+    bs, heads, h, w, _ = x.shape
+    logits = torch.einsum('b s h w d, x d -> b s h w x', x, emb)
+    logits = logits.view(-1, logits.shape[1]*logits.shape[2],
+                         logits.shape[3], logits.shape[4])
+    logits = rel_to_abs(logits)
+    logits = logits.reshape(bs, heads, h, w, w)
+    logits = logits.unsqueeze(dim=3)
+    exp_shape = [-1] * len(logits.shape)
+    exp_shape[3] = heads
+    return logits.expand(*exp_shape)
+
+
 class RelativePosEmb(nn.Module):
     def __init__(self, fmap_dim, head_dim):
         super().__init__()
+        self.h, self.w = ntuple(fmap_dim, 2)
+        scale = head_dim ** -0.5
+        self.rph = nn.Parameter(torch.randn(2*self.h-1, head_dim) * scale)
+        self.rpw = nn.Parameter(torch.randn(2*self.w-1, head_dim) * scale)
+
+    def forward(self, x):
+        x = x.view(x.shape[0], x.shape[1], self.h, self.w, -1)
+        rel_logits_w = relative_logits_1d(x, self.rpw)
+        rel_logits_w = rel_logits_w.view(rel_logits_w.shape[0],
+                                         rel_logits_w.shape[1],
+                                         rel_logits_w.shape[2] *
+                                         rel_logits_w.shape[4],
+                                         rel_logits_w.shape[3] *
+                                         rel_logits_w.shape[5])
+
+        x = x.view(x.shape[0], x.shape[1], self.w, self.h, -1)
+        rel_logits_h = relative_logits_1d(x, self.rph)
+        rel_logits_h = rel_logits_h.view(rel_logits_h.shape[0],
+                                         rel_logits_h.shape[1],
+                                         rel_logits_h.shape[2] *
+                                         rel_logits_h.shape[4],
+                                         rel_logits_h.shape[3] *
+                                         rel_logits_h.shape[5])
+        return rel_logits_w + rel_logits_h
 
 
 class AbsolutePosEmb(nn.Module):
