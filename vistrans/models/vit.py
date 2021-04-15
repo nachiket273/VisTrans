@@ -49,16 +49,9 @@ DEFAULT_CFG = {
     'mlp_ratio': 4.,
     'drop_rate': 0.,
     'attention_drop_rate': 0.,
-    'hybrid': False,
     'norm_layer': partial(nn.LayerNorm, eps=1e-6),
     'bias': True
 }
-
-
-# TO-DO: Implement hybrid embedding (features from some backbone as input)
-class HybridEmbed(nn.Module):
-    def __init__(self):
-        super().__init__()
 
 
 class PatchEmbed(nn.Module):
@@ -188,17 +181,14 @@ class Encoder(nn.Module):
 class ViT(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_ch=3, num_classes=1000,
                  embed_dim=768, depth=12, num_heads=12, mlp_ratio=4.,
-                 drop_rate=0., attention_drop_rate=0., hybrid=False,
+                 drop_rate=0., attention_drop_rate=0.,
                  norm_layer=partial(nn.LayerNorm, eps=1e-6), bias=True):
         super().__init__()
         self.num_classes = num_classes
         self.embed_dim = embed_dim
 
-        if hybrid:
-            self.patch_embed = HybridEmbed()  # not-implemented currently
-        else:
-            self.patch_embed = PatchEmbed(in_ch, img_size, patch_size,
-                                          self.embed_dim)
+        self.patch_embed = PatchEmbed(in_ch, img_size, patch_size,
+                                      self.embed_dim)
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
@@ -244,12 +234,12 @@ class VisionTransformer():
     def create_model(cls, img_size=224, patch_size=16, in_ch=3,
                      num_classes=1000, embed_dim=768, depth=12, num_heads=12,
                      mlp_ratio=4., drop_rate=0., attention_drop_rate=0.,
-                     hybrid=False, norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                     norm_layer=partial(nn.LayerNorm, eps=1e-6),
                      bias=True):
 
         return ViT(img_size, patch_size, in_ch, num_classes, embed_dim, depth,
                    num_heads, mlp_ratio, drop_rate, attention_drop_rate,
-                   hybrid, norm_layer, bias)
+                   norm_layer, bias)
 
     @classmethod
     def list_pretrained(cls):
