@@ -10,22 +10,24 @@ Official tensorflow implementation is available at:
 import torch
 import torch.nn as nn
 from vistrans.util import ntuple
+from torchvision import models
 
 
 PRETRAINED_MODELS = [
-    'botnet18',
-    'botnet34',
     'botnet50',
     'botnet101',
     'botnet152'
 ]
 
-PRETRAINED_URLS = {
-
-}
 
 DEFAULT_CFG = {
-
+    'img_size': 224,
+    'in_ch': 3,
+    'num_classes': 1000,
+    'groups': 1,
+    'norm_layer': None,
+    'n_heads': 4,
+    'pos_enc_type': 'relative'
 }
 
 
@@ -81,25 +83,18 @@ class RelativePosEmb(nn.Module):
         h, w = ntuple(fmap_dim, 2)
         h, w = int(h), int(w)
         self.scale = head_dim ** -0.5
-        self.w = nn.Parameter(torch.Tensor(w, head_dim))
-        self.h = nn.Parameter(torch.Tensor(h, head_dim))
+        self.h = nn.Parameter(torch.Tensor(2*h-1, head_dim))
+        self.w = nn.Parameter(torch.Tensor(2*w-1, head_dim))
         self._init_weights()
 
     def _init_weights(self):
         nn.init.normal_(self.w, self.scale)
         nn.init.normal_(self.h, self.scale)
 
-    def forward(self, q, k, v):
-        _, heads, h, w, dim = q.shape
-        q = q * (dim ** -0.5)
+    def forward(self, q, k):
         logits = torch.einsum('bnhwd,bnpqd->bnhwpq', q, k)
-        logits += absolute_logits(self.w, self.h, q)
-        weights = torch.reshape(logits, [-1, heads, h, w, h * w])
-        weights = weights.softmax(dim=-1)
-        weights = torch.reshape(weights, [-1, heads, h, w, h, w])
-        attn_out = torch.einsum('bnhwpq,bnpqd->bhwnd', weights, v)
-        attn_out = torch.reshape(attn_out, [-1, h, w, heads * dim])
-        return attn_out
+        logits += relative_logits(self.w, self.h, q)
+        return logits
 
 
 class AbsolutePosEmb(nn.Module):
@@ -107,8 +102,8 @@ class AbsolutePosEmb(nn.Module):
         super().__init__()
         h, w = ntuple(fmap_dim, 2)
         h, w = int(h), int(w)
-        self.h = nn.Parameter(torch.Tensor(2*h-1, head_dim))
-        self.w = nn.Parameter(torch.Tensor(2*w-1, head_dim))
+        self.w = nn.Parameter(torch.Tensor(w, head_dim))
+        self.h = nn.Parameter(torch.Tensor(h, head_dim))
         self.scale = head_dim ** -0.5
         self._init_weights()
 
@@ -116,16 +111,10 @@ class AbsolutePosEmb(nn.Module):
         nn.init.normal_(self.h, self.scale)
         nn.init.normal_(self.w, self.scale)
 
-    def forward(self, q, k, v):
-        _, heads, h, w, dim = q.shape
-        q = q * (dim ** -0.5)
+    def forward(self, q, k):
         logits = torch.einsum('bnhwd,bnpqd->bnhwpq', q, k)
-        weights = torch.reshape(logits, [-1, heads, h, w, h * w])
-        weights = weights.softmax(dim=-1)
-        weights = torch.reshape(weights, [-1, heads, h, w, h, w])
-        attn_out = torch.einsum('bnhwpq,bnpqd->bhwnd', weights, v)
-        attn_out = torch.reshape(attn_out, [-1, h, w, heads * dim])
-        return attn_out
+        logits += absolute_logits(self.w, self.h, q)
+        return logits
 
 
 class GroupPointWise(nn.Module):
@@ -140,7 +129,8 @@ class GroupPointWise(nn.Module):
         nn.init.normal_(self.w, std=0.01)
 
     def forward(self, x):
-        out = torch.einsum('bHWD,Dhd->bhHWd', x, self.w)
+        x = x.permute(0, 2, 3, 1)
+        out = torch.einsum('bhwc,cnp->bnhwp', x, self.w)
         return out
 
 
@@ -150,6 +140,7 @@ class MHSA(nn.Module):
         self.q = GroupPointWise(in_dim, n_heads)
         self.k = GroupPointWise(in_dim, n_heads)
         self.v = GroupPointWise(in_dim, n_heads)
+        print(fmap_dim)
 
         if pos_enc_type == 'relative':
             self.pos_emb = RelativePosEmb(fmap_dim, in_dim//n_heads)
@@ -160,7 +151,16 @@ class MHSA(nn.Module):
         q = self.q(x)
         k = self.k(x)
         v = self.v(x)
-        return self.pos_emb(q, k, v)
+        _, heads, h, w, dim = q.shape
+        q = q * (dim ** -0.5)
+        logits = self.pos_emb(q, k)
+        weights = torch.reshape(logits, [-1, heads, h, w, h * w])
+        weights = weights.softmax(dim=-1)
+        weights = torch.reshape(weights, [-1, heads, h, w, h, w])
+        attn_out = torch.einsum('bnhwpq,bnpqd->bhwnd', weights, v)
+        attn_out = torch.reshape(attn_out, [-1, h, w, heads * dim])
+        out = attn_out.permute(0, 3, 1, 2)
+        return out
 
 
 class Bottleneck(nn.Module):
@@ -168,8 +168,9 @@ class Bottleneck(nn.Module):
 
     def __init__(self, in_ch, out_ch, fmap_dim, stride=1, downsample=None,
                  groups=1, norm_layer=None, mhsa=False, n_heads=4,
-                 head_dim=128, pos_enc_type='relative'):
+                 pos_enc_type='relative'):
         super().__init__()
+        assert pos_enc_type in ['relative', 'absolute']
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self.conv1 = nn.Conv2d(in_ch, out_ch, kernel_size=1,
@@ -182,7 +183,6 @@ class Bottleneck(nn.Module):
         else:
             self.conv2 = nn.ModuleList()
             self.conv2.append(MHSA(out_ch, fmap_dim, n_heads=n_heads,
-                                   head_dim=head_dim,
                                    pos_enc_type=pos_enc_type))
             if stride == 2:
                 self.conv2.append(nn.AvgPool2d(2, 2))
@@ -207,7 +207,8 @@ class Bottleneck(nn.Module):
 
 class BotnetX(nn.Module):
     def __init__(self, layers, img_size=224, in_ch=3, num_classes=1000,
-                 groups=1, norm_layer=None):
+                 groups=1, n_heads=4, norm_layer=None,
+                 pos_enc_type='relative'):
         super().__init__()
         if not norm_layer:
             norm_layer = nn.BatchNorm2d
@@ -216,6 +217,8 @@ class BotnetX(nn.Module):
         self.dilation = 1
         self.groups = groups
         self.img_size = img_size
+        self.pos_enc_type = pos_enc_type
+        self.n_heads = n_heads
 
         self.conv1 = nn.Conv2d(in_ch, self.inplanes, kernel_size=7, stride=2,
                                padding=3, bias=False)
@@ -259,7 +262,9 @@ class BotnetX(nn.Module):
         layers = []
         layers.append(Bottleneck(self.inplanes, out_ch, self.img_size, stride,
                                  downsample, self.groups, mhsa=mhsa,
-                                 norm_layer=self.norm_layer))
+                                 norm_layer=self.norm_layer,
+                                 n_heads=self.n_heads,
+                                 pos_enc_type=self.pos_enc_type))
         if stride == 2:
             self.img_size /= 2
 
@@ -267,7 +272,9 @@ class BotnetX(nn.Module):
         for _ in range(1, num_blocks):
             layers.append(Bottleneck(self.inplanes, out_ch, self.img_size,
                                      groups=self.groups, mhsa=mhsa,
-                                     norm_layer=self.norm_layer))
+                                     norm_layer=self.norm_layer,
+                                     n_heads=self.n_heads,
+                                     pos_enc_type=self.pos_enc_type))
 
         return nn.Sequential(*layers)
 
@@ -286,14 +293,19 @@ class BotnetX(nn.Module):
         return self.fc(x)
 
 
-'''
 class BotNet():
     def __init__(self):
         super().__init__()
 
     @classmethod
-    def create_model(cls):
-        pass
+    def create_model(cls, layers, img_size=224, in_ch=3, num_classes=1000,
+                     groups=1, norm_layer=None, n_heads=4,
+                     pos_enc_type='relative'):
+        model = BotnetX(layers=layers, img_size=img_size, in_ch=in_ch,
+                        num_classes=num_classes, groups=groups,
+                        norm_layer=norm_layer, n_heads=n_heads,
+                        pos_enc_type=pos_enc_type)
+        return model
 
     @classmethod
     def list_pretrained(cls):
@@ -306,18 +318,54 @@ class BotNet():
         return name in PRETRAINED_MODELS
 
     @classmethod
-    def _get_url(cls, name):
-        return PRETRAINED_URLS[name]
-
-    @classmethod
     def _get_default_cfg(cls):
         return DEFAULT_CFG
 
     @classmethod
-    def _get_cfg(cls, name):
-        cfg = BotNet._get_default_cfg()
-        return cfg
+    def create_pretrained(cls, name, img_size=224, in_ch=3,
+                          num_classes=1000, n_heads=4,
+                          pos_enc_type='relative'):
+        if not BotNet._is_valid_model_name(name):
+            raise ValueError("The pretrained model is not available.")
 
-    @classmethod
-    def create_pretrained(cls):
-        pass'''
+        if name == 'botnet50':
+            model = models.resnet50(pretrained=True)
+        elif name == 'botnet101':
+            model = models.resnet101(pretrained=True)
+        else:
+            model = models.resnet152(pretrained=True)
+
+        if in_ch != 3:
+            model.conv1 = nn.Conv2d(in_ch, model.conv1.out_channels,
+                                    kernel_size=model.conv1.kernel_size,
+                                    stride=model.conv1.stride,
+                                    padding=model.conv1.padding,
+                                    bias=model.conv1.bias)
+
+        if num_classes != model.fc.out_features:
+            model.fc = nn.Linear(in_features=model.fc.in_features,
+                                 out_features=num_classes, bias=model.fc.bias)
+
+        out_ch = model.layer4[0].conv2.in_channels
+        model.layer4[0].conv2 = nn.ModuleList()
+        model.layer4[0].conv2.append(MHSA(out_ch, img_size//16,
+                                          n_heads=n_heads,
+                                          pos_enc_type=pos_enc_type))
+        model.layer4[0].conv2.append(nn.AvgPool2d(2, 2))
+        model.layer4[0].conv2 = nn.Sequential(*model.layer4[0].conv2)
+
+        out_ch = model.layer4[1].conv2.in_channels
+        model.layer4[1].conv2 = nn.ModuleList()
+        model.layer4[1].conv2.append(MHSA(out_ch, img_size//32,
+                                          n_heads=n_heads,
+                                          pos_enc_type=pos_enc_type))
+        model.layer4[1].conv2 = nn.Sequential(*model.layer4[1].conv2)
+
+        out_ch = model.layer4[2].conv2.in_channels
+        model.layer4[2].conv2 = nn.ModuleList()
+        model.layer4[2].conv2.append(MHSA(out_ch, img_size//32,
+                                          n_heads=n_heads,
+                                          pos_enc_type=pos_enc_type))
+        model.layer4[2].conv2 = nn.Sequential(*model.layer4[2].conv2)
+
+        return model

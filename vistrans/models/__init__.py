@@ -1,1 +1,2 @@
-from .vit import VisionTransformer, BotNet
+from .vit import VisionTransformer
+from .botnet import BotNet
