@@ -1,6 +1,39 @@
 # VisTrans
 Implementations of transformers based models for different vision tasks
 
+## Version 0.002 (04/17/2021)
+------------------------------
+Pretrained Pytorch <a href="https://arxiv.org/pdf/2101.11605v1.pdf">Bottleneck Transformers for Visual Recognition</a> including following
+<br>
+* botnet50
+* botnet101
+* botnet152
+<br>
+Implementation based off <a href="https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2">Official Tensorflow Implementation</a><br>
+
+## Install
+---------------------
+```Python
+pip install vistrans
+```
+1) List Pretrained Models.
+```Python
+from vistrans import BotNet
+BotNet.list_pretrained()
+```
+2) Create Pretrained Models.
+```Python
+from vistrans import BotNet
+model = BotNet.create_pretrained(name, img_size, in_ch, num_classes,
+                                 n_heads, pos_enc_type)
+```
+3) Create Custom Model
+```Python
+from vistrans import BotNet
+model = BotNet.create_model(layers, img_size, in_ch, num_classes, groups,
+                            norm_layer, n_heads, pos_enc_type)
+```
+
 ## Version 0.001 (03/04/2021)
 -----------------------------
 [![PyPI version](https://badge.fury.io/py/vistrans.svg)](https://badge.fury.io/py/vistrans)
