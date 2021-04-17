@@ -140,7 +140,6 @@ class MHSA(nn.Module):
         self.q = GroupPointWise(in_dim, n_heads)
         self.k = GroupPointWise(in_dim, n_heads)
         self.v = GroupPointWise(in_dim, n_heads)
-        print(fmap_dim)
 
         if pos_enc_type == 'relative':
             self.pos_emb = RelativePosEmb(fmap_dim, in_dim//n_heads)
