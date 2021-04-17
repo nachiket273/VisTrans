@@ -3,6 +3,8 @@ Implementations of transformers based models for different vision tasks
 
 ## Version 0.002 (04/17/2021)
 ------------------------------
+[![PyPI version](https://badge.fury.io/py/vistrans.svg)](https://badge.fury.io/py/vistrans)
+
 Pretrained Pytorch <a href="https://arxiv.org/pdf/2101.11605v1.pdf">Bottleneck Transformers for Visual Recognition</a> including following
 <br>
 * botnet50
