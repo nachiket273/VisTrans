@@ -1,0 +1,31 @@
+{% set name = "vistrans" %}
+{% set version = "0.0.2" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: 8f51e48d8a29b3567093685b787efaca837d47dfff883917e1befa3b15911c46
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+
+requirements:
+  host:
+    - pip
+    - python>=3.6
+    - pytorch>=1.4
+    - torchvision >=0.5
+  run:
+    - python>=3.6
+    - pytorch>=1.4
+    - torchvision >=0.5
+
+about:
+  home: https://github.com/nachiket273/VisTrans
+  license: MIT
+  license_family: MIT
+  summary: Implementations of transformers based models for different vision tasks
