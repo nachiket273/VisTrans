@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -ex
-set -o pipefail
 
 go_to_build_dir() {
     if [ ! -z $INPUT_SUBDIR ]; then
@@ -25,7 +24,7 @@ check_if_meta_yaml_file_exists() {
 
 build_package(){
     # Build for Linux
-    conda build -c conda-forge -c pytorch -c nachiket273 --output-folder . .
+    conda build --output-folder . .
 
     # Convert to other platforms: OSX, WIN
     if [[ $INPUT_PLATFORMS == *"osx"* ]]; then
