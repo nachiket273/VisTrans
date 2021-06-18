@@ -6,12 +6,11 @@ package:
   version: "{{ version }}"
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 8f51e48d8a29b3567093685b787efaca837d47dfff883917e1befa3b15911c46
+  path: ..
 
 build:
   number: 0
-  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+  script: python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
   host:
