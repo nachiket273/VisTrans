@@ -23,8 +23,8 @@ check_if_meta_yaml_file_exists() {
 }
 
 build_package(){
-    conda config --env --add channels conda-forge pytorch
-    
+    conda config --env --add channels conda-forge
+    conda config --env --add channels pytorch
     conda config --show-sources
     
     # Build for Linux
