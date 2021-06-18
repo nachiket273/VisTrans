@@ -23,6 +23,8 @@ check_if_meta_yaml_file_exists() {
 }
 
 build_package(){
+    conda config --show-sources
+    
     # Build for Linux
     conda build -c conda-forge -c pytorch --output-folder . .
 
