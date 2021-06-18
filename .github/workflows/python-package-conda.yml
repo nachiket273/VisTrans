@@ -1,8 +1,6 @@
 name: Publish Conda Package
 
-on: 
-  release:
-    types: [published, edited]
+on: [push]
 
 jobs:
   publish:
