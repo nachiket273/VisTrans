@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -ex
-set -euo pipefail
 
 go_to_build_dir() {
     if [ ! -z $INPUT_SUBDIR ]; then
