@@ -8,7 +8,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: publish-to-conda
-      uses: nachiket273/VisTrans
+      uses: nachiket273/VisTrans@v1
       with:
         subDir: '.conda'
         AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
