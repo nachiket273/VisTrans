@@ -28,7 +28,7 @@ build_package(){
     conda config --show-sources
     
     # Build for Linux
-    conda build -c conda-forge -c pytorch --output-folder ..
+    conda build -c conda-forge -c pytorch --output-folder . .
 
     # Convert to other platforms: OSX, WIN
     if [[ $INPUT_PLATFORMS == *"osx"* ]]; then
