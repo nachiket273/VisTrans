@@ -26,4 +26,4 @@ RUN apt-get install -y libjasper1
 RUN conda install -y anaconda-client conda-build conda-verify
 
 COPY entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["sh", "/entrypoint.sh"]
