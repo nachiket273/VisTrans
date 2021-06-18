@@ -6,9 +6,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@main
     - name: publish-to-conda
-      uses: nachiket273/VisTrans@master
+      uses: nachiket273/VisTrans@main
       with:
         subdir: '.conda'
         anacondatoken: ${{ secrets.ANACONDA_TOKEN }}
