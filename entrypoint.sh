@@ -27,6 +27,8 @@ build_package(){
     conda config --env --add channels pytorch
     conda config --show-sources
     
+    conda index ..
+    
     # Build for Linux
     conda build --output-folder . .
 
