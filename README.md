@@ -1,6 +1,26 @@
 # VisTrans
 Implementations of transformers based models for different vision tasks
 
+## Install
+1) Install from <a href="https://pypi.org/project/vistrans/">PyPI</a>
+<br>
+```Python
+pip install vistrans
+```
+<br>
+2) Install from <a href="https://anaconda.org/nachiket273/vistrans">Anaconda</a>
+<br>
+```Python
+conda install -c nachiket273 vistrans
+```
+
+## Version 0.003 (06/30/2021)
+------------------------------
+[![PyPI version](https://badge.fury.io/py/vistrans.svg)](https://badge.fury.io/py/vistrans)
+
+Minor fixes to fix issues with existing models.
+
+
 ## Version 0.002 (04/17/2021)
 ------------------------------
 [![PyPI version](https://badge.fury.io/py/vistrans.svg)](https://badge.fury.io/py/vistrans)
@@ -13,9 +33,8 @@ Pretrained Pytorch <a href="https://arxiv.org/pdf/2101.11605v1.pdf">Bottleneck T
 <br>
 Implementation based off <a href="https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2">Official Tensorflow Implementation</a><br>
 
-## Install
+## Usage
 ---------------------
-```Python
 pip install vistrans
 ```
 1) List Pretrained Models.
@@ -52,11 +71,8 @@ Pretrained Pytorch <a href="https://arxiv.org/abs/2010.11929">Vision Transformer
 <br>
 Implementation based off <a href=https://github.com/google-research/vision_transformer>official jax repository</a> and <a href="https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py">timm's implementation</a><br>
 
-## Install
+## Usage
 ---------------------
-```Python
-pip install vistrans
-```
 1) List Pretrained Models.
 ```Python
 from vistrans import VisionTransformer

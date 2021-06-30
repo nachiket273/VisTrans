@@ -102,12 +102,12 @@ class MLP(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, dim, num_heads=8, attn_dropout=0.):
+    def __init__(self, dim, num_heads=8, attn_dropout=0., bias=False):
         super().__init__()
         self.num_heads = num_heads
         self.scale = (dim // num_heads)**-0.5
 
-        self.qkv = nn.Linear(dim, dim*3, bias=False)
+        self.qkv = nn.Linear(dim, dim*3, bias=bias)
         self.attn_dropout = nn.Dropout(attn_dropout)
         self.out = nn.Linear(dim, dim)
 
@@ -135,7 +135,8 @@ class EncoderLayer(nn.Module):
         self.embed_dim = embed_dim
         self.num_heads = n_head
         self.attn = Attention(embed_dim, num_heads=n_head,
-                              attn_dropout=attention_drop_rate)
+                              attn_dropout=attention_drop_rate,
+                              bias=bias)
         self.dropout = nn.Dropout(p=dropout_ratio)
         self.norm1 = norm_layer(embed_dim)
         self.norm2 = norm_layer(embed_dim)
@@ -313,7 +314,7 @@ class VisionTransformer():
         model = ViT(img_size, patch_size, in_ch, num_classes, cfg['embed_dim'],
                     cfg['depth'], cfg['num_heads'], cfg['mlp_ratio'],
                     cfg['drop_rate'], cfg['attention_drop_rate'],
-                    cfg['hybrid'], cfg['norm_layer'], cfg['bias'])
+                    cfg['norm_layer'], cfg['bias'])
 
         state_dict = get_pretrained_weights(url, cfg, num_classes, in_ch,
                                             check_hash=True)
