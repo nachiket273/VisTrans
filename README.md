@@ -3,13 +3,12 @@ Implementations of transformers based models for different vision tasks
 
 ## Install
 1) Install from <a href="https://pypi.org/project/vistrans/">PyPI</a>
-<br>
+
 ```Python
 pip install vistrans
 ```
-<br>
 2) Install from <a href="https://anaconda.org/nachiket273/vistrans">Anaconda</a>
-<br>
+
 ```Python
 conda install -c nachiket273 vistrans
 ```
